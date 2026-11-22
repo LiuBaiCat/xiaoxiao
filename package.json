@@ -1,0 +1,26 @@
+{
+  "name": "slow-paws-link",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run --maxWorkers=2",
+    "test:browser": "node scripts/verify-game.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^3.2.4"
+  }
+}
