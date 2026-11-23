@@ -32,6 +32,7 @@ export function soundForTransition(previous: GameState, next: GameState): SoundN
     if (next.phase === 'paused' && next.pauseReason === 'manual') return 'pause';
   }
   if (next.phase !== 'playing') return null;
+  if (next.resources.lives < previous.resources.lives) return 'failure';
   if (next.moveIndex > previous.moveIndex) return 'match';
   if (next.remainingMs - previous.remainingMs > 29000) return 'extend';
   if (next.hint && next.hint !== previous.hint) return 'hint';

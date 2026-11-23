@@ -44,11 +44,10 @@ export function createBoard(
     const kind = pair % kinds;
     tiles.push({ id: pair * 2 + 1, kind }, { id: pair * 2 + 2, kind });
   }
-  const randomized = shuffle(tiles, rng);
   const board: Board = Array.from({ length: rows }, (_, row) =>
-    randomized.slice(row * cols, (row + 1) * cols),
+    tiles.slice(row * cols, (row + 1) * cols),
   );
-  return ensurePlayable(board, rng).board;
+  return shufflePlayable(board, rng).board;
 }
 
 export function findMove(board: Board): Move | null {
@@ -75,7 +74,26 @@ export function ensurePlayable(
   rng: () => number = Math.random,
 ): { board: Board; shuffled: boolean } {
   if (findMove(board) !== null) return { board, shuffled: false };
+  return shufflePlayable(board, rng);
+}
 
+function distributionPenalty(board: Board, positions: Point[]): number {
+  let adjacent = 0;
+  let crowded = 0;
+  for (const { row, col } of positions) {
+    const kind = board[row]![col]!.kind;
+    const above = board[row - 1]?.[col]?.kind === kind;
+    const below = board[row + 1]?.[col]?.kind === kind;
+    const left = board[row]?.[col - 1]?.kind === kind;
+    const right = board[row]?.[col + 1]?.kind === kind;
+    adjacent += Number(below) + Number(right);
+    crowded += Math.max(0, Number(above) + Number(below) + Number(left) + Number(right) - 1);
+  }
+  // Break up clusters before reducing adjacent pairs; keep a few easy starting moves.
+  return crowded * (positions.length + 1) + Math.max(0, adjacent - Math.max(2, Math.ceil(positions.length / 24)));
+}
+
+function shufflePlayable(board: Board, rng: () => number): { board: Board; shuffled: boolean } {
   const positions: Point[] = [];
   const tiles: Tile[] = [];
   const seenKinds = new Set<number>();
@@ -92,10 +110,17 @@ export function ensurePlayable(
 
   if (pairedKind === undefined) return { board, shuffled: false };
 
+  let best: Board | null = null;
+  let bestPenalty = Infinity;
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const candidate = placeTiles(board, positions, shuffle(tiles, rng));
-    if (findMove(candidate) !== null) return { board: candidate, shuffled: true };
+    const penalty = distributionPenalty(candidate, positions);
+    if (penalty >= bestPenalty || findMove(candidate) === null) continue;
+    best = candidate;
+    bestPenalty = penalty;
+    if (penalty === 0) break;
   }
+  if (best !== null) return { board: best, shuffled: true };
 
   // Swapping whole tiles preserves counts and empty cells without relying on RNG.
   for (let first = 0; first < positions.length; first += 1) {

@@ -42,6 +42,55 @@ function seededRng(seed: number): () => number {
   };
 }
 
+// Measure spatial outcomes rather than duplicating the production ranking formula.
+function spatialStats(board: Board): { adjacentEdges: number; largeComponents: number; simplePairs: number } {
+  let adjacentEdges = 0;
+  let largeComponents = 0;
+  let simplePairs = 0;
+  const visited = new Set<string>();
+  board.forEach((row, r) => row.forEach((tile, c) => {
+    if (tile === null) return;
+    if (board[r]?.[c + 1]?.kind === tile.kind) adjacentEdges += 1;
+    if (board[r + 1]?.[c]?.kind === tile.kind) adjacentEdges += 1;
+    const key = `${r},${c}`;
+    if (visited.has(key)) return;
+    visited.add(key);
+    const component: Point[] = [{ row: r, col: c }];
+    for (let index = 0; index < component.length; index += 1) {
+      const point = component[index]!;
+      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        const next = { row: point.row + dr!, col: point.col + dc! };
+        const nextKey = `${next.row},${next.col}`;
+        if (board[next.row]?.[next.col]?.kind !== tile.kind || visited.has(nextKey)) continue;
+        visited.add(nextKey);
+        component.push(next);
+      }
+    }
+    if (component.length >= 3) largeComponents += 1;
+    if (component.length === 2) simplePairs += 1;
+  }));
+  return { adjacentEdges, largeComponents, simplePairs };
+}
+
+// Reference the old single Fisher–Yates deal, with no distribution optimization.
+function singleShuffle(board: Board, rng: () => number): Board {
+  const tiles = tilesOf(board);
+  for (let index = tiles.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(rng() * (index + 1));
+    [tiles[index], tiles[other]] = [tiles[other]!, tiles[index]!];
+  }
+  let index = 0;
+  return board.map((row) => row.map((tile) => tile === null ? null : tiles[index++]!));
+}
+
+function unshuffledDeal(rows: number, cols: number, kinds: number): Board {
+  return fromKinds(Array.from({ length: rows }, (_, row) =>
+    Array.from({ length: cols }, (_, col) => Math.floor((row * cols + col) / 2) % kinds),
+  ));
+}
+
+const distributionSeeds = [1, 23, 42, 73, 391, 2026, 12345, 0xdecafbad];
+
 function expectConserved(before: Board, after: Board): void {
   expect(after.map((row) => row.length)).toEqual(before.map((row) => row.length));
   const original = new Map(tilesOf(before).map((tile) => [tile.id, tile]));
@@ -294,6 +343,19 @@ describe('动物与果蔬图案', () => {
   });
 });
 
+describe('独立空间统计', () => {
+  it.each<{ name: string; grid: KindGrid; edges: number; large: number; pairs: number }>([
+    { name: '直线三连', grid: [[0, 0, 0]], edges: 2, large: 1, pairs: 0 },
+    { name: 'L 型三连', grid: [[0, 0], [0, null]], edges: 2, large: 1, pairs: 0 },
+    { name: '四格方块', grid: [[0, 0], [0, 0]], edges: 4, large: 1, pairs: 0 },
+    { name: '两个不同类双牌', grid: [[0, 0, 1, 1]], edges: 2, large: 0, pairs: 2 },
+    { name: '空位隔开的同类双牌', grid: [[0, 0, null, 0, 0]], edges: 2, large: 0, pairs: 2 },
+    { name: '对角不相邻', grid: [[0, null], [null, 0]], edges: 0, large: 0, pairs: 0 },
+  ])('$name 按四向连通分量和无向边统计', ({ grid, edges, large, pairs }) => {
+    expect(spatialStats(fromKinds(grid))).toEqual({ adjacentEdges: edges, largeComponents: large, simplePairs: pairs });
+  });
+});
+
 describe('关卡与初始棋盘', () => {
   it('严格符合十二关尺寸、种类、时限与变形顺序合同', () => {
     expect(levels.map((level) => level.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
@@ -302,7 +364,7 @@ describe('关卡与初始棋盘', () => {
       [10, 14], [10, 14], [10, 14], [10, 14], [10, 14], [10, 14],
     ]);
     expect(levels.map((level) => level.kinds)).toEqual([18, 19, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28]);
-    expect(levels.map((level) => level.seconds)).toEqual([1080, 1050, 1020, 990, 960, 930, 900, 870, 840, 810, 780, 750]);
+    expect(levels.map((level) => level.seconds)).toEqual([360, 345, 330, 320, 310, 300, 290, 280, 270, 260, 250, 240]);
     expect(levels.map((level) => level.layouts)).toEqual([
       ['still'], ['still'], ['down'], ['up'], ['splitVertical'], ['splitHorizontal'],
       ['centerHorizontal'], ['centerVertical'], ['splitVertical', 'splitHorizontal'],
@@ -344,6 +406,58 @@ describe('关卡与初始棋盘', () => {
     }
   });
 
+  it('八个固定种子覆盖十二关，相较单次洗牌显著减少相邻边和三枚以上连通块', () => {
+    const totals = {
+      baseline: { adjacentEdges: 0, largeComponents: 0, simplePairs: 0 },
+      optimized: { adjacentEdges: 0, largeComponents: 0, simplePairs: 0 },
+    };
+    for (const seed of distributionSeeds) {
+      for (const level of levels) {
+        const baseline = singleShuffle(unshuffledDeal(level.rows, level.cols, level.kinds), seededRng(seed));
+        const rng = vi.fn(seededRng(seed));
+        const optimized = createBoard(level.rows, level.cols, level.kinds, rng);
+        const before = spatialStats(baseline);
+        const after = spatialStats(optimized);
+        for (const key of ['adjacentEdges', 'largeComponents', 'simplePairs'] as const) {
+          totals.baseline[key] += before[key];
+          totals.optimized[key] += after[key];
+        }
+        expect(rng.mock.calls.length).toBeGreaterThanOrEqual(139);
+        expect(rng.mock.calls.length).toBeLessThanOrEqual(20 * 139);
+        expect(rng.mock.calls.length % 139).toBe(0);
+        expect(tilesOf(optimized).sort((a, b) => a.id - b.id)).toEqual(
+          tilesOf(baseline).sort((a, b) => a.id - b.id),
+        );
+        expect(new Set(tilesOf(optimized).map((tile) => tile.id)).size).toBe(140);
+        const move = findMove(optimized);
+        expect(move).not.toBeNull();
+        expectValidPath(optimized, move!.from, move!.to, move!.path);
+      }
+    }
+    console.info('开局空间统计（8 种子 × 12 关）', totals);
+    // Aggregate margins, not a promise of an optimal or cluster-free individual deal.
+    expect(totals.baseline.largeComponents).toBeGreaterThan(0);
+    expect(totals.optimized.adjacentEdges).toBeLessThan(totals.baseline.adjacentEdges * 0.7);
+    expect(totals.optimized.largeComponents).toBeLessThan(totals.baseline.largeComponents * 0.4);
+    expect(totals.optimized.adjacentEdges).toBeGreaterThan(0);
+    expect(totals.optimized.simplePairs).toBeGreaterThan(0);
+  });
+
+  it.each([
+    { kinds: 1, value: 0 }, { kinds: 1, value: 0.999999 },
+    { kinds: 2, value: 0 }, { kinds: 2, value: 0.999999 },
+  ])('$kinds 种图案配合常量 RNG $value 时只尽力改善，并在二十次内结束', ({ kinds, value }) => {
+    const rng = vi.fn(() => value);
+    const board = createBoard(4, 4, kinds, rng);
+    expect(rng).toHaveBeenCalledTimes(20 * 15);
+    expect(tilesOf(board).sort((a, b) => a.id - b.id)).toEqual(tilesOf(unshuffledDeal(4, 4, kinds)));
+    expect(new Set(tilesOf(board).map((tile) => tile.id)).size).toBe(16);
+    expect(spatialStats(board).largeComponents).toBeGreaterThan(0);
+    const move = findMove(board);
+    expect(move).not.toBeNull();
+    expectValidPath(board, move!.from, move!.to, move!.path);
+  });
+
   it('支持默认 RNG、相同种子可复现和最小棋盘', () => {
     expect(findMove(createBoard(4, 6, 4))).not.toBeNull();
     expect(createBoard(6, 10, 12, seededRng(18))).toEqual(createBoard(6, 10, 12, seededRng(18)));
@@ -378,7 +492,75 @@ describe('提示与有限次洗牌', () => {
     expect(rng).not.toHaveBeenCalled();
   });
 
-  it('非空死局在随机洗牌成功后立即停止，保留空格和每枚 Tile', () => {
+  it.each<{ name: string; grid: KindGrid }>([
+    { name: '直线三连', grid: [[0, 0, 0, null, 0]] },
+    { name: 'L 型三连', grid: [[0, 0, null], [0, null, 0]] },
+    { name: '四格方块', grid: [[0, 0], [0, 0]] },
+  ])('已有合法配对的$name 不为改善分布而重排', ({ grid }) => {
+    const board = freezeBoard(fromKinds(grid));
+    expect(spatialStats(board).largeComponents).toBe(1);
+    expect(findMove(board)).not.toBeNull();
+    const rng = vi.fn(seededRng(2026));
+    const result = ensurePlayable(board, rng);
+    expect(result.board).toBe(board);
+    expect(result.shuffled).toBe(false);
+    expect(rng).not.toHaveBeenCalled();
+  });
+
+  it('固定种子死局重排优于第一次可玩洗牌，同时保留空位、Tile 对象和 ID', () => {
+    // Each border has four distinct kinds and there are no adjacent matches.
+    const board = freezeBoard(fromKinds([
+      Array<null>(6).fill(null),
+      [null, 0, 1, 2, 3, null],
+      [null, 1, 2, 3, 0, null],
+      [null, 2, 3, 0, 1, null],
+      [null, 3, 0, 1, 2, null],
+      Array<null>(6).fill(null),
+    ]));
+    expect(findMove(board)).toBeNull();
+    const totals = {
+      baseline: { adjacentEdges: 0, largeComponents: 0, simplePairs: 0 },
+      optimized: { adjacentEdges: 0, largeComponents: 0, simplePairs: 0 },
+    };
+    for (const seed of distributionSeeds) {
+      const baselineRng = seededRng(seed);
+      let firstPlayable: Board | undefined;
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const candidate = singleShuffle(board, baselineRng);
+        if (findMove(candidate) !== null) {
+          firstPlayable = candidate;
+          break;
+        }
+      }
+      expect(firstPlayable).toBeDefined();
+      const rng = vi.fn(seededRng(seed));
+      const result = ensurePlayable(board, rng);
+      expect(result.shuffled).toBe(true);
+      expect(result.board).not.toBe(board);
+      expect(rng.mock.calls.length).toBeGreaterThanOrEqual(15);
+      expect(rng.mock.calls.length).toBeLessThanOrEqual(20 * 15);
+      expect(rng.mock.calls.length % 15).toBe(0);
+      expect(occupiedMask(result.board)).toEqual(occupiedMask(board));
+      expectConserved(board, result.board);
+      expect(remainingPairs(result.board)).toBe(8);
+      const move = findMove(result.board);
+      expect(move).not.toBeNull();
+      expectValidPath(result.board, move!.from, move!.to, move!.path);
+      const before = spatialStats(firstPlayable!);
+      const after = spatialStats(result.board);
+      for (const key of ['adjacentEdges', 'largeComponents', 'simplePairs'] as const) {
+        totals.baseline[key] += before[key];
+        totals.optimized[key] += after[key];
+      }
+    }
+    console.info('死局空间统计（8 种子）', totals);
+    expect(totals.baseline.largeComponents).toBeGreaterThan(0);
+    expect(totals.optimized.adjacentEdges).toBeLessThan(totals.baseline.adjacentEdges * 0.7);
+    expect(totals.optimized.largeComponents).toBeLessThan(totals.baseline.largeComponents * 0.4);
+    expect(totals.optimized.simplePairs).toBeGreaterThan(0);
+  });
+
+  it('非空死局首个可玩候选仅有两组相邻双牌时立即停止，保留空格和每枚 Tile', () => {
     const board = freezeBoard(fromKinds([
       [null, null, null, null],
       [null, 0, 1, null],

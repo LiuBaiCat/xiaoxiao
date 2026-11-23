@@ -30,6 +30,10 @@ function watchAudio() {
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' });
 await context.addInitScript(watchAudio);
+await context.addInitScript(() => {
+  let seed = 20261122;
+  Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+});
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
@@ -65,11 +69,42 @@ const expectBoardFits = async target => {
       const r = control.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && (r.top < -1 || r.left < -1 || r.right > viewport.width + 1 || r.bottom > area.top + 1);
     }).map(control => control.textContent);
-    return { outside, covered, misplacedControls, overflowX: document.documentElement.scrollWidth - viewport.width, overflowY: document.documentElement.scrollHeight - viewport.height, tileSize: tiles[0]?.getBoundingClientRect().width ?? 0 };
+    const grid = document.querySelector('.board-grid');
+    const gridRect = grid.getBoundingClientRect();
+    const gridLines = grid.querySelector('.board-grid-lines');
+    const lines = [...gridLines.querySelectorAll('line')];
+    const lineStyle = getComputedStyle(lines[0]);
+    const cols = Number(grid.parentElement.style.getPropertyValue('--cols'));
+    const rows = Number(grid.parentElement.style.getPropertyValue('--rows'));
+    const step = gridRect.width / cols;
+    const misaligned = tiles.filter(tile => {
+      const [row, col] = tile.dataset.cell.split('-').map(Number);
+      const rect = tile.getBoundingClientRect();
+      return Math.abs(rect.x + rect.width / 2 - gridRect.x - (col + 0.5) * step) > 0.2 || Math.abs(rect.y + rect.height / 2 - gridRect.y - (row + 0.5) * step) > 0.2;
+    }).map(tile => tile.dataset.cell);
+    const misalignedLines = lines.filter(line => {
+      const rect = line.getBoundingClientRect();
+      const vertical = line.getAttribute('x1') === line.getAttribute('x2');
+      const position = Number(line.getAttribute(vertical ? 'x1' : 'y1')) / 100 * step;
+      return vertical
+        ? Math.abs(rect.x - gridRect.x - position) > 0.2 || Math.abs(rect.y - gridRect.y) > 0.2 || Math.abs(rect.height - gridRect.height) > 0.2
+        : Math.abs(rect.y - gridRect.y - position) > 0.2 || Math.abs(rect.x - gridRect.x) > 0.2 || Math.abs(rect.width - gridRect.width) > 0.2;
+    }).map(line => line.outerHTML);
+    return { outside, covered, misplacedControls, misaligned, misalignedLines, lineCount: lines.length, expectedLines: cols + rows + 2, lineColor: lineStyle.stroke, dashes: lineStyle.strokeDasharray, vectorEffect: lineStyle.vectorEffect, gridPointerEvents: getComputedStyle(gridLines).pointerEvents, gridHidden: gridLines.getAttribute('aria-hidden'), gridFocusable: gridLines.getAttribute('focusable'), step, rowStep: gridRect.height / rows, overflowX: document.documentElement.scrollWidth - viewport.width, overflowY: document.documentElement.scrollHeight - viewport.height, tileSize: tiles[0]?.getBoundingClientRect().width ?? 0 };
   });
   expect(fit.outside, JSON.stringify(fit)).toEqual([]);
   expect(fit.covered, JSON.stringify(fit)).toEqual([]);
   expect(fit.misplacedControls, JSON.stringify(fit)).toEqual([]);
+  expect(fit.misaligned, JSON.stringify(fit)).toEqual([]);
+  expect(fit.misalignedLines, JSON.stringify(fit)).toEqual([]);
+  expect(fit.lineCount).toBe(fit.expectedLines);
+  expect(fit.lineColor).toBe('rgb(139, 159, 180)');
+  expect(fit.dashes).toBe('4px, 4px');
+  expect(fit.vectorEffect).toBe('non-scaling-stroke');
+  expect(fit.gridPointerEvents).toBe('none');
+  expect(fit.gridHidden).toBe('true');
+  expect(fit.gridFocusable).toBe('false');
+  expect(Math.abs(fit.rowStep - fit.step)).toBeLessThan(0.02);
   expect(fit.overflowX).toBeLessThanOrEqual(1);
   expect(fit.overflowY).toBeLessThanOrEqual(1);
   return fit.tileSize;
@@ -92,8 +127,10 @@ const selectTestLevel = async id => {
   await click('开始这一关');
 };
 const actualPair = async () => {
-  const move = await page.evaluate(async () => {
+  const result = await page.evaluate(async () => {
     const { findMove } = await import('/src/engine/board.ts');
+    const { applyLayout } = await import('/src/engine/layouts.ts');
+    const { levels } = await import('/src/engine/levels.ts');
     const surface = document.querySelector('.board-surface');
     const rows = Number(surface.style.getPropertyValue('--rows'));
     const cols = Number(surface.style.getPropertyValue('--cols'));
@@ -102,12 +139,25 @@ const actualPair = async () => {
       const [row, col] = tile.dataset.cell.split('-').map(Number);
       board[row][col] = { id: Number(tile.dataset.testid.replace('tile-', '')), kind: Number(tile.dataset.kind) };
     }
-    return findMove(board);
+    const move = findMove(board);
+    if (!move) return { move, deadlocked: false, cleared: false };
+    board[move.from.row][move.from.col] = null;
+    board[move.to.row][move.to.col] = null;
+    const levelId = Number(document.querySelector('.level-pill').textContent.match(/\d+/)[0]);
+    const moveIndex = Number.parseInt(document.querySelector('[data-testid="pair-count"]').textContent, 10);
+    const level = levels[levelId - 1];
+    const shifted = applyLayout(board, level.layouts[moveIndex % level.layouts.length]);
+    const cleared = shifted.every(row => row.every(tile => tile === null));
+    return { move, deadlocked: !cleared && findMove(shifted) === null, cleared };
   });
+  const { move, deadlocked, cleared } = result;
   expect(move).not.toBeNull();
+  const lives = Number(await page.getByTestId('lives').innerText());
   await page.locator(`[data-cell="${move.from.row}-${move.from.col}"]`).click();
   await page.locator(`[data-cell="${move.to.row}-${move.to.col}"]`).click();
   await nextFrame();
+  await expect(page.getByTestId('lives')).toHaveText(String(lives - Number(deadlocked) + Number(cleared)));
+  return deadlocked;
 };
 
 try {
@@ -176,6 +226,42 @@ try {
   await expectExitCancel();
   await click('开始这一关');
   await expectFullBoard();
+  const openingDistribution = await page.locator('.tile').evaluateAll(tiles => {
+    const kinds = new Map(tiles.map(tile => [tile.dataset.cell, tile.dataset.kind]));
+    let adjacent = 0, clusters = 0;
+    for (const tile of tiles) {
+      const [row, col] = tile.dataset.cell.split('-').map(Number);
+      const same = (r, c) => kinds.get(`${r}-${c}`) === tile.dataset.kind;
+      adjacent += Number(same(row, col + 1)) + Number(same(row + 1, col));
+      if (same(row, col + 1) && same(row, col + 2)) clusters++;
+      if (same(row + 1, col) && same(row + 2, col)) clusters++;
+      for (const dr of [-1, 1]) for (const dc of [-1, 1]) {
+        if (same(row + dr, col) && same(row, col + dc)) clusters++;
+      }
+    }
+    return { adjacent, clusters };
+  });
+  expect(openingDistribution.clusters).toBe(0);
+  expect(openingDistribution.adjacent).toBeGreaterThan(0);
+  // Bounded sampling prefers six adjacent pairs but does not impose a hard cap.
+  expect(openingDistribution.adjacent).toBeLessThanOrEqual(8);
+  console.log('Seeded opening distribution:', JSON.stringify(openingDistribution));
+  await expect(page.getByTestId('match-feedback')).toHaveCount(0);
+  await expect(page.getByText('每对 +3秒', { exact: true })).toHaveCount(0);
+  const controlColors = await page.locator('.hint-button, .tool-actions .extend-button, .pause-button, .tool-actions .home-button, .close-game').evaluateAll(buttons => {
+    const luminance = color => color.match(/[\d.]+/g).slice(0, 3).map(Number).map(value => {
+      const channel = value / 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+    return buttons.map(button => {
+      const style = getComputedStyle(button);
+      const ink = luminance(style.color), background = luminance(style.backgroundColor);
+      return { name: button.getAttribute('aria-label'), background: style.backgroundColor, contrast: (Math.max(ink, background) + 0.05) / (Math.min(ink, background) + 0.05) };
+    });
+  });
+  expect(controlColors).toHaveLength(5);
+  expect(new Set(controlColors.map(button => button.background)).size).toBe(5);
+  for (const button of controlColors) expect(button.contrast, button.name).toBeGreaterThanOrEqual(4.5);
   await expect(page.getByTestId('lives')).toHaveText('5');
   await expectSound([349.23, 440]);
   await screenshot('game-1280');
@@ -212,19 +298,65 @@ try {
   await expect(page.locator('.is-hinted')).toHaveCount(2);
   await expectSound([739.99, 987.77]);
   await expect(page.getByRole('button', { name: /提示一下/ })).toBeDisabled();
+  expect(await page.locator('.tool-actions .hint-button').evaluate(button => getComputedStyle(button).backgroundColor)).toBe('rgb(232, 233, 228)');
   const hintPair = await page.locator('.is-hinted').evaluateAll(tiles => tiles.map(tile => tile.dataset.cell));
   expect(hintPair).toHaveLength(2);
   const beforeMatch = await timerSeconds();
   const beforeMatchFill = await page.locator('.time-fill').evaluate(fill => Number.parseFloat(fill.style.width));
   for (const cell of hintPair) await page.locator(`[data-cell="${cell}"]`).click();
+  await expect(page.locator('.connection-line')).toBeVisible();
+  expect(await page.locator('.connection-line').evaluate(line => getComputedStyle(line).pointerEvents)).toBe('none');
+  await screenshot('grid-connection');
   await nextFrame();
   await expect(page.locator('.tile')).toHaveCount(138);
   await expectSound([523.25, 659.25, 783.99]);
   expect(await timerSeconds()).toBeGreaterThanOrEqual(beforeMatch + 2);
   expect(await timerSeconds()).toBeLessThanOrEqual(beforeMatch + 3);
-  await expect(page.locator('.game-message')).toContainText('时间 +3秒');
+  await expect(page.getByTestId('match-feedback')).toHaveText('+3秒');
+  await expect(page.locator('.game-message')).not.toContainText('+3秒');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  expect(await page.getByTestId('match-feedback').evaluate(node => getComputedStyle(node).animationName)).toBe('bonus-pop');
+  expect(await page.locator('.time-surge').evaluate(node => getComputedStyle(node).animationName)).toBe('time-flow');
+  const motion = await page.evaluate(() => {
+    const badge = document.querySelector('.time-bonus');
+    const sweep = document.querySelector('.time-surge');
+    const badgeAnimation = badge.getAnimations()[0];
+    const sweepAnimation = sweep.getAnimations()[0];
+    badgeAnimation.pause();
+    sweepAnimation.pause();
+    const sample = time => {
+      badgeAnimation.currentTime = time;
+      sweepAnimation.currentTime = time;
+      return { scale: new DOMMatrixReadOnly(getComputedStyle(badge).transform).a, sweepX: new DOMMatrixReadOnly(getComputedStyle(sweep).transform).m41 };
+    };
+    const peak = sample(360);
+    const settled = sample(900);
+    sample(500);
+    return { peak, settled, duration: badgeAnimation.effect.getTiming().duration };
+  });
+  expect(motion.duration).toBe(3000);
+  expect(motion.peak.scale).toBeGreaterThan(1.1);
+  expect(motion.settled.scale).toBe(1);
+  expect(motion.settled.sweepX).toBeGreaterThan(motion.peak.sweepX);
+  await screenshot('bonus-feedback');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await page.getByTestId('match-feedback').evaluate(node => getComputedStyle(node).animationName)).toBe('none');
+  await expect(page.locator('.time-surge')).not.toBeVisible();
   const matchedFill = await page.locator('.time-fill').evaluate(fill => Number.parseFloat(fill.style.width));
   expect(matchedFill).toBeGreaterThan(beforeMatchFill);
+  await page.clock.runFor(2000);
+  await expect(page.getByTestId('match-feedback')).toBeVisible();
+  await page.clock.runFor(400);
+  await expect(page.getByTestId('match-feedback')).toHaveCount(0);
+  await expect(page.locator('.time-surge')).toHaveCount(0);
+  await expectBoardFits(page);
+  const [emptyRow, emptyCol] = hintPair[0].split('-').map(Number);
+  await expect(page.locator(`[data-cell="${hintPair[0]}"]`)).toHaveCount(0);
+  const gridBounds = await page.locator('.board-grid').boundingBox();
+  await page.locator('.board-grid').click({ position: { x: (emptyCol + 0.5) * gridBounds.width / 14, y: (emptyRow + 0.5) * gridBounds.height / 10 } });
+  await expect(page.getByTestId('pair-count')).toHaveText('1 / 70 对');
+  await expect(page.locator('.is-selected')).toHaveCount(0);
+  await screenshot('grid-empty-cells');
   const beforeExtend = await timerSeconds();
   await page.getByRole('button', { name: /加时 30秒/ }).click();
   expect(await timerSeconds()).toBeGreaterThanOrEqual(beforeExtend + 29);
@@ -244,6 +376,7 @@ try {
   await page.evaluate(() => window.dispatchEvent(new Event('blur')));
   await expect(page.getByRole('dialog')).toContainText('自动暂停');
   await click('继续游戏');
+  const boardBeforeReload = await page.locator('.tile').evaluateAll(tiles => tiles.map(tile => [tile.dataset.cell, tile.dataset.kind, tile.dataset.testid]));
   await page.reload();
   await click('继续游戏');
   await expect(page.getByRole('dialog')).toContainText('上次的进度都在');
@@ -251,20 +384,27 @@ try {
   expect(await page.evaluate(() => window.__audioProbe.masters.at(-1))).toBe(0.2);
   await click('继续游戏');
   await expect(page.locator('.tile')).toHaveCount(138);
-  for (let pair = 0; pair < 69; pair++) await actualPair();
+  expect(await page.locator('.tile').evaluateAll(tiles => tiles.map(tile => [tile.dataset.cell, tile.dataset.kind, tile.dataset.testid]))).toEqual(boardBeforeReload);
+  let normalDeadlocks = 0;
+  for (let pair = 0; pair < 69; pair++) normalDeadlocks += Number(await actualPair());
+  const wonLives = 6 - normalDeadlocks;
   await expect(page.getByRole('dialog')).toContainText('真棒，又过了一关');
   await expectSound([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5]);
+  await expect(page.getByRole('dialog').getByTestId('match-feedback')).toHaveText('已补满');
+  await page.clock.runFor(3100);
+  await expect(page.getByTestId('match-feedback')).toHaveCount(0);
   await expectExitCancel();
-  await expect(page.getByTestId('lives')).toHaveText('6');
+  await expect(page.getByTestId('lives')).toHaveText(String(wonLives));
   await expect(page.getByRole('button', { name: /提示一下/ })).toContainText('4');
   await expect(page.getByRole('button', { name: /加时 30秒/ })).toContainText('3');
   await page.reload();
   await click('继续游戏');
-  await expect(page.getByTestId('lives')).toHaveText('6');
+  await expect(page.getByTestId('lives')).toHaveText(String(wonLives));
   await click('出发，下一关');
   await click('开始这一关');
   await expect(page.locator('.level-title')).toContainText('小小伙伴');
   await actualPair();
+  const normalLives = await page.getByTestId('lives').innerText();
   await click('返回首页');
   const normalSave = await page.evaluate(() => localStorage.getItem('slow-paws-link:save:v1'));
   await click('测试／破解模式');
@@ -287,6 +427,19 @@ try {
   await click('消除一对');
   await nextFrame();
   await expect(page.locator('.tile')).toHaveCount(138);
+  expect(await timerSeconds()).toBe(frozenTime);
+  await expect(page.getByTestId('match-feedback')).toHaveText('已补满');
+  const previousFeedback = await page.getByTestId('match-feedback').elementHandle();
+  await click('消除一对');
+  await nextFrame();
+  expect(await previousFeedback.evaluate(node => node.isConnected)).toBe(false);
+  await previousFeedback.dispose();
+  await expect(page.getByTestId('match-feedback')).toHaveText('时间已满');
+  expect(await timerSeconds()).toBe(frozenTime);
+  await click('暂停休息');
+  await expect(page.getByTestId('match-feedback')).toHaveCount(0);
+  await click('继续游戏');
+  await expect(page.getByTestId('match-feedback')).toHaveCount(0);
   for (let id = 2; id <= 12; id++) {
     await selectTestLevel(id);
     await expectFullBoard();
@@ -295,7 +448,9 @@ try {
     await click('消除一对');
     await nextFrame();
     await expect(page.locator('.tile')).toHaveCount(count - 2);
-    expect(await timerSeconds()).toBe(beforeAutoPair + 3);
+    expect(await timerSeconds()).toBe(beforeAutoPair);
+    await expect(page.getByTestId('match-feedback')).toHaveText('时间已满');
+    await expect(page.locator('.time-surge')).toHaveCount(0);
     await setTestTools(false);
     await expectBoardFits(page);
     if (id === 6) await screenshot('test-split-1280');
@@ -343,7 +498,7 @@ try {
   expect(await page.evaluate(() => localStorage.getItem('slow-paws-link:save:v1'))).toBe(normalSave);
   await click('继续游戏');
   await expect(page.locator('.level-title')).toContainText('小小伙伴');
-  await expect(page.getByTestId('lives')).toHaveText('6');
+  await expect(page.getByTestId('lives')).toHaveText(normalLives);
   const firstTile = page.locator('.tile').first();
   await firstTile.focus();
   await page.keyboard.press('Enter');
@@ -408,6 +563,84 @@ try {
   expect(networkRequests).toEqual([]);
   await offlineContext.close();
 
+  for (const startingLives of [2, 1]) {
+    const deadlockContext = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true, reducedMotion: 'reduce' });
+    await deadlockContext.addInitScript(watchAudio);
+    await deadlockContext.addInitScript(lives => {
+      const key = 'slow-paws-link:save:v1';
+      if (localStorage.getItem(key)) return;
+      const board = Array.from({ length: 10 }, () => Array(14).fill(null));
+      [[2, 2], [0, 1], [1, 0]].forEach((row, r) => row.forEach((kind, c) => { board[r][c] = { id: r * 2 + c + 1, kind }; }));
+      localStorage.setItem(key, JSON.stringify({ version: 2, phase: 'paused', levelId: 1, board, resources: { lives, hints: 3, extensions: 3 }, remainingMs: 60000, moveIndex: 67, unlocked: 5 }));
+    }, startingLives);
+    const deadlockPage = await deadlockContext.newPage();
+    deadlockPage.on('pageerror', error => errors.push(error.message));
+    await deadlockPage.clock.install({ time: new Date('2026-11-22T00:00:00Z') });
+    await deadlockPage.clock.pauseAt(new Date('2026-11-22T00:00:01Z'));
+    await deadlockPage.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+    await deadlockPage.getByRole('button', { name: '继续游戏', exact: true }).click();
+    await deadlockPage.getByRole('button', { name: '继续游戏', exact: true }).click();
+    await expect(deadlockPage.locator('.tile')).toHaveCount(6);
+    await deadlockPage.locator('[data-cell="0-0"]').click();
+    await deadlockPage.locator('[data-cell="0-1"]').click();
+    await deadlockPage.clock.runFor(650);
+    await expect(deadlockPage.getByTestId('lives')).toHaveText(String(startingLives - 1));
+    await expect(deadlockPage.locator('.tile')).toHaveCount(4);
+    await expect(deadlockPage.getByTestId('pair-count')).toContainText('68');
+    await expect(deadlockPage.getByTestId('timer')).toHaveText('63秒');
+    await expectSound(startingLives === 1 ? [392, 329.63, 261.63] : [293.66, 246.94], deadlockPage);
+    const afterDeadlock = await deadlockPage.evaluate(() => JSON.parse(localStorage.getItem('slow-paws-link:save:v1')));
+    expect(afterDeadlock.resources).toEqual({ lives: startingLives - 1, hints: 3, extensions: 3 });
+    expect(afterDeadlock.moveIndex).toBe(68);
+    expect(afterDeadlock.remainingMs).toBe(63000);
+    expect(afterDeadlock.unlocked).toBe(5);
+    if (startingLives === 2) {
+      expect(afterDeadlock.phase).toBe('playing');
+      await expect(deadlockPage.locator('.game-message')).toContainText('扣除1点生命，已重新排列');
+      await expect(deadlockPage.getByRole('dialog')).toHaveCount(0);
+      await deadlockPage.screenshot({ path: 'artifacts/deadlock-rearranged.png', fullPage: true });
+      await deadlockPage.getByRole('button', { name: '暂停休息', exact: true }).click();
+      await deadlockPage.clock.runFor(5000);
+      await expect(deadlockPage.getByTestId('lives')).toHaveText('1');
+    } else {
+      expect(afterDeadlock.phase).toBe('gameover');
+      await expect(deadlockPage.getByRole('dialog')).toContainText('棋盘没有可连接的图案，扣除了最后1点生命');
+      await expect(deadlockPage.getByTestId('match-feedback')).toHaveCount(0);
+      await deadlockPage.screenshot({ path: 'artifacts/deadlock-gameover.png', fullPage: true });
+      await deadlockPage.clock.runFor(5000);
+      await expect(deadlockPage.getByTestId('timer')).toHaveText('63秒');
+      expect(await deadlockPage.evaluate(() => JSON.parse(localStorage.getItem('slow-paws-link:save:v1')))).toEqual(afterDeadlock);
+    }
+    await deadlockPage.reload();
+    await deadlockPage.getByRole('button', { name: '继续游戏', exact: true }).click();
+    await expect(deadlockPage.getByTestId('lives')).toHaveText(String(startingLives - 1));
+    expect(await deadlockPage.evaluate(() => JSON.parse(localStorage.getItem('slow-paws-link:save:v1')).board)).toEqual(afterDeadlock.board);
+    if (startingLives === 2) {
+      await deadlockPage.getByRole('button', { name: '继续游戏', exact: true }).click();
+      await expect(deadlockPage.getByTestId('match-feedback')).toHaveCount(0);
+      for (let pair = 0; pair < 2; pair++) {
+        await deadlockPage.getByRole('button', { name: /提示一下/ }).click();
+        await expect(deadlockPage.locator('.is-hinted')).toHaveCount(2);
+        const cells = await deadlockPage.locator('.is-hinted').evaluateAll(tiles => tiles.map(tile => tile.dataset.cell));
+        for (const cell of cells) await deadlockPage.locator(`[data-cell="${cell}"]`).click();
+        await deadlockPage.clock.runFor(650);
+      }
+      await expect(deadlockPage.getByRole('dialog')).toContainText('真棒，又过了一关');
+      await expect(deadlockPage.getByTestId('lives')).toHaveText('2');
+    } else {
+      await expect(deadlockPage.getByRole('dialog')).toContainText('扣除了最后1点生命');
+      await expect(deadlockPage.getByRole('button', { name: '继续游戏', exact: true })).toHaveCount(0);
+      await deadlockPage.getByRole('button', { name: '重新挑战这一关', exact: true }).click();
+      await expect(deadlockPage.getByRole('dialog')).toContainText('初次见面');
+      const retried = await deadlockPage.evaluate(() => JSON.parse(localStorage.getItem('slow-paws-link:save:v1')));
+      expect(retried.resources).toEqual({ lives: 5, hints: 3, extensions: 3 });
+      expect(retried.unlocked).toBe(5);
+      await deadlockPage.getByRole('button', { name: '开始这一关', exact: true }).click();
+      await expect(deadlockPage.locator('.tile')).toHaveCount(140);
+    }
+    await deadlockContext.close();
+  }
+
   const closeContext = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true, reducedMotion: 'reduce' });
   await closeContext.addInitScript(() => {
     window.__fullscreenRequests = 0;
@@ -431,11 +664,12 @@ try {
   await closing.getByRole('button', { name: '开始游戏', exact: true }).click();
   await expect.poll(() => closing.evaluate(() => !!document.fullscreenElement)).toBe(true);
   await closing.getByRole('button', { name: '开始这一关', exact: true }).click();
-  await closing.clock.fastForward(540000);
-  await expect(closing.getByTestId('timer')).toHaveText('540秒');
+  await expect(closing.getByTestId('timer')).toHaveText('360秒');
+  await closing.clock.fastForward(180000);
+  await expect(closing.getByTestId('timer')).toHaveText('180秒');
   await expect(closing.locator('.time-fill')).toHaveAttribute('style', 'width: 50%;');
   await closing.screenshot({ path: 'artifacts/countdown-half.png', fullPage: true });
-  await closing.clock.fastForward(520000);
+  await closing.clock.fastForward(160000);
   await expect(closing.locator('.time-stat')).toHaveClass(/time-low/);
   await closing.getByRole('button', { name: /加时 30秒/ }).click();
   await expect(closing.getByTestId('timer')).toHaveText('50秒');
@@ -517,7 +751,7 @@ try {
   expect(await denied.evaluate(() => window.__fullscreenRequests)).toBe(3);
   await deniedContext.close();
   expect(errors).toEqual([]);
-  console.log('Browser verification passed: full 10×14 boards at 12 resolution/zoom combinations, top controls, simplified home/level picker, 18–28 patterns, +3s per pair, smooth countdown progress, automatic/manual/denied fullscreen, exit cancellation and saved progress, native blocked-tab fallback and successful popup closure, sound/mute/volume, full gameplay, rewards, 12 levels, test isolation, timeout, keyboard, offline HTML/audio, unavailable storage/audio.');
+  console.log('Browser verification passed: full 10×14 boards at 12 resolution/zoom combinations, aligned persistent grid lines and inert empty cells, top controls, simplified home/level picker, 18–28 patterns, capped match bonuses and transient/reduced-motion feedback, distinct high-contrast control colors, smooth countdown progress, automatic/manual/denied fullscreen, exit cancellation and saved progress, native blocked-tab fallback and successful popup closure, sound/mute/volume, full gameplay, rewards, 12 levels, deadlock life loss/rearrangement/gameover/save/retry, test isolation, timeout, keyboard, offline HTML/audio, unavailable storage/audio.');
 } catch (error) {
   if (!page.isClosed()) {
     await page.screenshot({ path: 'artifacts/browser-failure.png', fullPage: true }).catch(() => {});

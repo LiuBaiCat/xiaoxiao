@@ -27,6 +27,10 @@ export function Board({ game, dispatch }: { game: GameState; dispatch: (action: 
   return <div className="board-fit" role="region" aria-label="10行14列棋盘，完整显示">
     <div className={`board-surface ${!active ? 'board-obscured' : ''}`} style={{ '--cols': cols, '--rows': rows } as CSSProperties} aria-label="连连看棋盘">
       <div className="board-grid" aria-hidden={!active}>
+        <svg className="board-grid-lines" viewBox={`0 0 ${cols * 100} ${rows * 100}`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          {Array.from({ length: cols + 1 }, (_, col) => <line key={`col-${col}`} x1={col * 100} y1={0} x2={col * 100} y2={rows * 100} />)}
+          {Array.from({ length: rows + 1 }, (_, row) => <line key={`row-${row}`} x1={0} y1={row * 100} x2={cols * 100} y2={row * 100} />)}
+        </svg>
         {displayed.flatMap((row, r) => row.map((tile, c) => {
           if (!tile) return null;
           const point = { row: r, col: c };

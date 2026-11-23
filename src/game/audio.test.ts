@@ -39,6 +39,34 @@ describe('声音对应真实游戏结果', () => {
     expect(soundForTransition(before, matched)).toBe('match');
     expect(soundForTransition(matched, transition(matched, { type: 'TICK' }, 600))).toBeNull();
   });
+  it.each((['normal', 'test'] as const).flatMap(mode => [2, 1].map(lives => ({ mode, lives }))))('prioritizes deadlock life loss over a match in $mode mode with $lives lives', ({ mode, lives }) => {
+    const game = {
+      ...transition(createGame(1, mode), { type: 'RESUME' }, 0),
+      board: [[2, 2], [0, 1], [1, 0]].map((row, r) => row.map((kind, c) => ({ id: r * 2 + c + 1, kind }))),
+      resources: { lives, hints: 3, extensions: 3 },
+    };
+    const before = mode === 'normal' ? transition(game, { type: 'SELECT', point: { row: 0, col: 0 } }, 0) : game;
+    const matched = transition(before, mode === 'normal'
+      ? { type: 'SELECT', point: { row: 0, col: 1 } }
+      : { type: 'AUTO_PAIR' }, 0);
+    expect(matched.moveIndex).toBe(before.moveIndex + 1);
+    expect(matched.resources.lives).toBe(lives - 1);
+    expect(matched.phase).toBe(lives === 1 ? 'gameover' : 'playing');
+    const cue = lives === 1 ? 'gameover' : 'failure';
+    expect(soundForTransition(before, matched)).toBe(cue);
+    expect(soundForTransition(before, { ...matched, note: '' })).toBe(cue);
+    const repeated = transition(matched, { type: 'SELECT', point: { row: 0, col: 1 } }, 1);
+    expect(soundForTransition(matched, repeated)).toBeNull();
+    const settled = transition(repeated, { type: 'TICK' }, 600);
+    expect(soundForTransition(repeated, settled)).toBeNull();
+    expect(settled.resources.lives).toBe(lives - 1);
+  });
+  it('recognizes a playing life decrease independently of move index or note', () => {
+    const before = started();
+    const after = { ...before, resources: { ...before.resources, lives: before.resources.lives - 1 }, note: '' };
+    expect(soundForTransition(before, after)).toBe('failure');
+    expect(soundForTransition(after, { ...after, resources: { ...after.resources } })).toBeNull();
+  });
   it('plays win, timeout and gameover as different cues', () => {
     const before = started();
     expect(soundForTransition(before, transition(before, { type: 'COMPLETE' }, 0))).toBe('win');

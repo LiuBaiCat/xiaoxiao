@@ -48,7 +48,7 @@ export function decodeGame(raw: string): GameState | null {
     if ((saved.phase === 'won') !== (ids.size === 0)) return null;
     if (saved.phase === 'gameover' ? saved.resources.lives !== 0 : saved.resources.lives === 0) return null;
     if (['playing', 'paused', 'won'].includes(saved.phase) && saved.remainingMs === 0) return null;
-    if (['timeout', 'gameover'].includes(saved.phase) && saved.remainingMs !== 0) return null;
+    if (saved.phase === 'timeout' && saved.remainingMs !== 0) return null;
     const resources = { lives: saved.resources.lives, hints: saved.resources.hints, extensions: saved.resources.extensions };
     const base = createGame(saved.levelId, 'normal', 0, saved.unlocked, resources);
     if (legacy) {

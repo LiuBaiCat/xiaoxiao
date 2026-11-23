@@ -8,7 +8,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 18,
-    seconds: 1080,
+    seconds: 360,
     layouts: ['still'],
   },
   {
@@ -18,7 +18,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 19,
-    seconds: 1050,
+    seconds: 345,
     layouts: ['still'],
   },
   {
@@ -28,7 +28,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 20,
-    seconds: 1020,
+    seconds: 330,
     layouts: ['down'],
   },
   {
@@ -38,7 +38,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 21,
-    seconds: 990,
+    seconds: 320,
     layouts: ['up'],
   },
   {
@@ -48,7 +48,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 22,
-    seconds: 960,
+    seconds: 310,
     layouts: ['splitVertical'],
   },
   {
@@ -58,7 +58,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 23,
-    seconds: 930,
+    seconds: 300,
     layouts: ['splitHorizontal'],
   },
   {
@@ -68,7 +68,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 24,
-    seconds: 900,
+    seconds: 290,
     layouts: ['centerHorizontal'],
   },
   {
@@ -78,7 +78,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 24,
-    seconds: 870,
+    seconds: 280,
     layouts: ['centerVertical'],
   },
   {
@@ -88,7 +88,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 25,
-    seconds: 840,
+    seconds: 270,
     layouts: ['splitVertical', 'splitHorizontal'],
   },
   {
@@ -98,7 +98,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 26,
-    seconds: 810,
+    seconds: 260,
     layouts: ['up', 'right', 'down', 'left'],
   },
   {
@@ -108,7 +108,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 27,
-    seconds: 780,
+    seconds: 250,
     layouts: ['centerHorizontal', 'splitHorizontal', 'centerVertical', 'splitVertical'],
   },
   {
@@ -118,7 +118,7 @@ export const levels: Level[] = [
     rows: 10,
     cols: 14,
     kinds: 28,
-    seconds: 750,
+    seconds: 240,
     layouts: ['down', 'splitVertical', 'splitHorizontal', 'centerHorizontal', 'up', 'centerVertical'],
   },
 ];

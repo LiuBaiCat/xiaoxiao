@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { levels } from './engine/levels';
 import { layoutNames } from './engine/layouts';
-import { createGame, transition, type Action, type GameState } from './game/machine';
+import { createGame, MATCH_BONUS_MS, transition, type Action, type GameState } from './game/machine';
 import { encodeGame, loadGame, saveGame, type LoadResult } from './game/storage';
 import { AnimalIcon } from './components/AnimalIcon';
 import { Board } from './components/Board';
@@ -146,6 +146,8 @@ export default function App() {
   const currentLevel = game ? levels[game.levelId - 1] : levels[0];
   const timePercent = Math.min(100, (game?.remainingMs ?? 0) / (currentLevel.seconds * 1000) * 100);
   const totalPairs = currentLevel.rows * currentLevel.cols / 2;
+  const matchFeedback = game?.matchFeedback;
+  const bonusFeedback = matchFeedback && <span key={game.moveIndex} className={`time-bonus${matchFeedback.addedMs === 0 ? ' time-bonus-full' : ''}`} role="status" data-testid="match-feedback">{matchFeedback.addedMs === MATCH_BONUS_MS ? '+3秒' : matchFeedback.addedMs > 0 ? '已补满' : '时间已满'}</span>;
   const fullscreenButton = document.fullscreenEnabled && <button className="text-button fullscreen-button" data-skip-auto-fullscreen aria-label={fullscreen ? '退出全屏' : '全屏显示'} onClick={toggleFullscreen}><Icon name="fullscreen" size={22} /><span className="full-label">{fullscreen ? '退出全屏' : '全屏'}</span><span className="short-label">{fullscreen ? '窗口' : '全屏'}</span></button>;
   const closeButton = <button className="text-button close-game" data-skip-auto-fullscreen aria-label="关闭游戏" onClick={requestExit}><Icon name="close" size={22} /><span className="full-label">关闭游戏</span><span className="short-label">关闭</span></button>;
 
@@ -163,7 +165,7 @@ export default function App() {
   }}>
     {view === 'home' && <header className="site-header">
       <div className="brand"><span className="brand-mark"><Icon name="paw" size={28} /></span><span>慢慢连</span></div>
-      <div className="header-right"><SoundControls preferences={soundPreferences} onChange={changeSoundPreferences} onPreview={() => sound.play('match')} /><button className="text-button" onClick={() => setHelp(true)}><Icon name="help" />怎么玩</button><button className="text-button test-entry" onClick={startTest}>测试／破解模式</button>{fullscreenButton}{closeButton}</div>
+      <div className="header-right"><SoundControls preferences={soundPreferences} onChange={changeSoundPreferences} onPreview={() => sound.play('match')} /><button className="text-button help-button" onClick={() => setHelp(true)}><Icon name="help" />怎么玩</button><button className="text-button test-entry" onClick={startTest}>测试／破解模式</button>{fullscreenButton}{closeButton}</div>
     </header>}
     {warning && <div className="storage-warning" role="status">{warning}</div>}
     {view === 'home' ? <main className="home-main">
@@ -172,8 +174,8 @@ export default function App() {
         <h1 id="home-title">开心连连看</h1>
         <p className="home-rule">点两个相同图案，连起来就消除。</p>
         <button className="button primary start-button" onClick={() => normal ? setView('game') : startNormal(1)}><Icon name="play" size={30} />{normal ? '继续游戏' : '开始游戏'}</button>
-        <div className="home-secondary"><button className="button" onClick={() => setLevelPicker(true)}>选择关卡</button>{normal && <button className="button" onClick={() => setConfirmLevel(1)}>重新开始</button>}</div>
-        <p className="save-caption">{normal ? `已保存第 ${normal.levelId} 关，随时可以接着玩。` : '点错不扣生命 · 消除一对加3秒'}</p>
+        <div className="home-secondary"><button className="button home-button" onClick={() => setLevelPicker(true)}>选择关卡</button>{normal && <button className="button restart-button" onClick={() => setConfirmLevel(1)}>重新开始</button>}</div>
+        <p className="save-caption">{normal ? `已保存第 ${normal.levelId} 关，随时可以接着玩。` : '点错不扣生命，慢慢找就好。'}</p>
         <button className="text-button exit-game" data-skip-auto-fullscreen onClick={requestExit}>退出游戏</button>
       </section>
     </main> : game && <main className="game-main">
@@ -187,25 +189,25 @@ export default function App() {
         {testing && <TestPanel game={game} dispatch={dispatch} onExit={exitTest} onLevel={id => setTest(previous => ({ ...createGame(id, 'test', performance.now()), frozen: previous?.frozen ?? true, unlimited: previous?.unlimited ?? true }))} />}
         <div className="game-stats">
           <div className="level-title"><span className="level-pill">第 {game.levelId} 关</span><h1>{currentLevel.name}</h1><span className="layout-label">{layoutNames[currentLevel.layouts[game.moveIndex % currentLevel.layouts.length]]}</span></div>
-          <div className={`time-stat${seconds <= 30 ? ' time-low' : ''}`}><Icon name="clock" size={24} /><div className="time-meter"><div className="time-progress" role="progressbar" aria-label={game.frozen ? '时间冻结' : '剩余时间'} aria-valuemin={0} aria-valuemax={Math.max(currentLevel.seconds, seconds)} aria-valuenow={seconds} aria-valuetext={`还剩${seconds}秒${game.frozen ? '，时间冻结' : ''}`}><span className="time-fill" style={{ width: `${timePercent}%` }} /></div><span className="timer-caption">{game.frozen ? '冻结 ' : '还剩 '}<span data-testid="timer">{seconds}秒</span></span></div><span className="match-bonus">每对 +3秒</span></div>
+          <div className={`time-stat${seconds <= 30 ? ' time-low' : ''}`}><Icon name="clock" size={24} /><div className="time-meter"><div className="time-track"><div className="time-progress" role="progressbar" aria-label={game.frozen ? '时间冻结' : '剩余时间'} aria-valuemin={0} aria-valuemax={Math.max(currentLevel.seconds, seconds)} aria-valuenow={seconds} aria-valuetext={`还剩${seconds}秒${game.frozen ? '，时间冻结' : ''}`}><span className="time-fill" style={{ width: `${timePercent}%` }}>{matchFeedback && matchFeedback.addedMs > 0 && <span key={game.moveIndex} className="time-surge" aria-hidden="true" />}</span></div>{game.phase === 'playing' && bonusFeedback}</div><span className="timer-caption">{game.frozen ? '冻结 ' : '还剩 '}<span data-testid="timer">{seconds}秒</span></span></div></div>
           <div className="progress-stat"><span className="stat-label">已消除</span><strong data-testid="pair-count">{game.moveIndex}<span> / {totalPairs} 对</span></strong></div>
           <div className="life-stat"><span className="heart-symbol"><Icon name="heart" size={24} /></span><span className="stat-label">生命</span><strong data-testid="lives">{game.resources.lives}</strong></div>
         </div>
       </div>
       <div className="game-board-wrap"><Board game={game} dispatch={dispatch} /></div>
       <div className="game-message" aria-live="polite">{game.note}</div>
-      {!help && !exitStage && <GameDialogs game={game} dispatch={dispatch} onHome={home} onExit={requestExit} />}
+      {!help && !exitStage && <GameDialogs game={game} dispatch={dispatch} onHome={home} onExit={requestExit} bonusFeedback={bonusFeedback} />}
     </main>}
     {levelPicker && <Modal title="选择关卡" onClose={() => setLevelPicker(false)}><div className="level-grid">{levels.map(level => {
       const unlocked = level.id <= (normal?.unlocked ?? 1);
       return <button key={level.id} className={`level-card ${level.id === (normal?.levelId ?? 1) ? 'current' : ''}`} disabled={!unlocked} onClick={() => openLevel(level.id)} aria-label={`第${level.id}关 ${level.name}${!unlocked ? '，待解锁' : ''}`}><strong>第 {level.id} 关</strong><span>{level.name}</span>{!unlocked && <Icon name="lock" size={18} />}</button>;
     })}</div><p className="level-help">过一关，就会解锁下一关。</p></Modal>}
-    {help && <Modal title="三步就会，慢慢来" onClose={() => setHelp(false)}><div className="help-steps"><div><b>1</b><span><strong>找两个相同图案</strong>动物、水果、蔬菜都可以配对。</span></div><div><b>2</b><span><strong>路通了，就能消除</strong>连线最多拐两个弯，不能穿过其他图块，可以绕棋盘外侧。</span></div><div><b>3</b><span><strong>每消除一对，加3秒</strong>清空70对就过关。点错不扣生命，找不到可点顶部“提示一下”。</span></div></div><p className="help-note">时间用完扣1生命。每过一关，获得1生命、2提示、1加时；加时一次增加30秒。没有可连图案时自动免费重排。</p><button className="button primary wide" onClick={() => setHelp(false)}>明白了，轻松玩</button></Modal>}
-    {confirmLevel !== null && <Modal title="开启一段新旅程？" onClose={() => setConfirmLevel(null)}><p>将从第 {confirmLevel} 关重新排列，生命、提示和加时重置为5、3、3。当前这一局会被替换，已解锁关卡仍保留。</p><button className="button primary wide" onClick={() => startNormal(confirmLevel)}>确定，开始新的一局</button><button className="text-button modal-secondary" onClick={() => setConfirmLevel(null)}>保留当前进度</button></Modal>}
+    {help && <Modal title="三步就会，慢慢来" onClose={() => setHelp(false)}><div className="help-steps"><div><b>1</b><span><strong>找两个相同图案</strong>动物、水果、蔬菜都可以配对。</span></div><div><b>2</b><span><strong>路通了，就能消除</strong>连线最多拐两个弯，不能穿过其他图块，可以绕棋盘外侧。</span></div><div><b>3</b><span><strong>连对了，还能补时间</strong>每对最多补3秒，只补到本关初始时长；时间已满就不再加。清空70对就过关，点错不扣生命。</span></div></div><p className="help-note">时间用完或棋盘没有可连图案时，扣1生命；死局扣除后仍有生命就自动重排，生命用完则结束。每过一关，获得1生命、2提示、1加时；加时一次增加30秒。</p><button className="button primary wide" onClick={() => setHelp(false)}>明白了，轻松玩</button></Modal>}
+    {confirmLevel !== null && <Modal title="开启一段新旅程？" onClose={() => setConfirmLevel(null)}><p>将从第 {confirmLevel} 关重新排列，生命、提示和加时重置为5、3、3。当前这一局会被替换，已解锁关卡仍保留。</p><button className="button restart-button wide" onClick={() => startNormal(confirmLevel)}>确定，开始新的一局</button><button className="text-button modal-secondary" onClick={() => setConfirmLevel(null)}>保留当前进度</button></Modal>}
     {exitStage && <Modal title={exitStage === 'confirm' ? '要退出游戏吗？' : '可以关闭这个页面了'} onClose={() => setExitStage(null)}>
       <p>{normal ? exitSaved ? '正常游戏进度已保存，下次打开可以接着玩。' : '这次没能保存进度，关闭页面后本次进度会丢失。' : '当前没有需要保存的正常游戏进度。'}{testing && <><br />测试模式的进度不会保存。</>}</p>
       {exitStage === 'blocked' && <p className="exit-instructions">浏览器未关闭此页。请按 <strong>Ctrl + W</strong>，或点击浏览器标签页上的关闭按钮。</p>}
-      {exitStage === 'confirm' && <button className="button primary wide" data-skip-auto-fullscreen onClick={closeGame}>确定退出</button>}
+      {exitStage === 'confirm' && <button className="button wide exit-game" data-skip-auto-fullscreen onClick={closeGame}>确定退出</button>}
       <button className={`button wide${exitStage === 'blocked' ? ' primary' : ' modal-secondary'}`} data-skip-auto-fullscreen onClick={() => setExitStage(null)}>{exitStage === 'confirm' ? '暂不退出' : '返回游戏'}</button>
     </Modal>}
   </div>;

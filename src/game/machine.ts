@@ -20,6 +20,7 @@ export type GameState = {
   hint: Move | null;
   hintUntil: number;
   animation: { board: Board; path: Point[]; until: number } | null;
+  matchFeedback: { addedMs: number; until: number } | null;
   note: string;
   pauseReason: 'intro' | 'manual' | 'away' | 'restored' | 'upgraded';
   frozen: boolean;
@@ -42,7 +43,7 @@ export function createGame(levelId = 1, mode: GameState['mode'] = 'normal', now 
     mode, phase: 'paused', levelId, board: createBoard(level.rows, level.cols, level.kinds),
     resources: { ...resources }, remainingMs: level.seconds * 1000, anchor: null,
     moveIndex: 0, unlocked: mode === 'test' ? 12 : Math.max(unlocked, levelId),
-    selected: null, hint: null, hintUntil: now, animation: null,
+    selected: null, hint: null, hintUntil: now, animation: null, matchFeedback: null,
     note: '点一下，再点相同的图案。', pauseReason: 'intro',
     frozen: mode === 'test', unlimited: mode === 'test',
   };
@@ -54,7 +55,7 @@ function expire(state: GameState): GameState {
   return {
     ...state, resources: { ...state.resources, lives }, remainingMs: 0,
     phase: lives > 0 ? 'timeout' : 'gameover', anchor: null,
-    selected: null, hint: null, animation: null, note: '休息一下，不着急。',
+    selected: null, hint: null, animation: null, matchFeedback: null, note: '休息一下，不着急。',
   };
 }
 
@@ -62,6 +63,7 @@ export function advance(state: GameState, now: number): GameState {
   let next = state;
   if (state.animation && now >= state.animation.until) next = { ...next, animation: null };
   if (state.hint && now >= state.hintUntil) next = { ...next, hint: null };
+  if (state.matchFeedback && now >= state.matchFeedback.until) next = { ...next, matchFeedback: null };
   if (state.phase !== 'playing') return next;
   const elapsed = state.anchor === null || state.frozen ? 0 : Math.max(0, now - state.anchor);
   next = { ...next, remainingMs: Math.max(0, state.remainingMs - elapsed), anchor: now };
@@ -89,15 +91,19 @@ function match(state: GameState, from: Point, to: Point, now: number): GameState
     (r === from.row && c === from.col) || (r === to.row && c === to.col) ? null : tile));
   const level = levels[state.levelId - 1];
   const shifted = applyLayout(removed, level.layouts[state.moveIndex % level.layouts.length]);
-  const playable = ensurePlayable(shifted);
-  const matched = finish({
-    ...state, board: playable.board, moveIndex: state.moveIndex + 1,
-    remainingMs: state.remainingMs + MATCH_BONUS_MS,
-    selected: null, hint: null,
-    animation: { board: state.board, path, until: now + 340 },
-    note: playable.shuffled ? '消除一对，时间 +3秒。没有可连的伙伴，已为您免费重新排列。' : '消除一对，时间 +3秒。慢慢找下一对。',
+  const deadlocked = remainingPairs(shifted) > 0 && findMove(shifted) === null;
+  const lives = state.resources.lives - (deadlocked ? 1 : 0);
+  const gameover = lives === 0;
+  const addedMs = Math.min(MATCH_BONUS_MS, Math.max(0, level.seconds * 1000 - state.remainingMs));
+  return finish({
+    ...state, board: deadlocked && !gameover ? ensurePlayable(shifted).board : shifted,
+    phase: gameover ? 'gameover' : 'playing', moveIndex: state.moveIndex + 1,
+    resources: { ...state.resources, lives }, remainingMs: state.remainingMs + addedMs,
+    anchor: gameover ? null : state.anchor, selected: null, hint: null,
+    animation: gameover ? null : { board: state.board, path, until: now + 340 },
+    matchFeedback: gameover ? null : { addedMs, until: now + 3000 },
+    note: gameover ? '没有可连接的图案，扣除1点生命，生命用完了。' : deadlocked ? '没有可连接的图案，扣除1点生命，已重新排列。' : '消除一对，慢慢找下一对。',
   });
-  return matched.phase === 'won' ? { ...matched, note: `${matched.note}消除一对，时间 +3秒。` } : matched;
 }
 
 export function transition(state: GameState, action: Action, now: number): GameState {
@@ -111,7 +117,7 @@ export function transition(state: GameState, action: Action, now: number): GameS
   }
   if (action.type === 'PAUSE') {
     return current.phase === 'playing'
-      ? { ...current, phase: 'paused', anchor: null, pauseReason: action.reason ?? 'manual', animation: null, selected: null, hint: null }
+      ? { ...current, phase: 'paused', anchor: null, pauseReason: action.reason ?? 'manual', animation: null, matchFeedback: null, selected: null, hint: null }
       : current;
   }
   if (action.type === 'RESUME') {
@@ -135,7 +141,7 @@ export function transition(state: GameState, action: Action, now: number): GameS
   if (action.type === 'COMPLETE') {
     if (current.mode !== 'test') return current;
     const level = levels[current.levelId - 1];
-    return finish({ ...current, board: current.board.map(row => row.map(() => null)), moveIndex: level.rows * level.cols / 2 });
+    return finish({ ...current, board: current.board.map(row => row.map(() => null)), moveIndex: level.rows * level.cols / 2, matchFeedback: null });
   }
   if (current.animation) return current;
   if (action.type === 'EXTEND') {

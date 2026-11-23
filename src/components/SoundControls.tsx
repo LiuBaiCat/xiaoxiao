@@ -18,7 +18,7 @@ export function SoundControls({ preferences, onChange, onPreview }: {
         <label htmlFor="sound-volume">音量 <strong>{Math.round(preferences.volume * 100)}%</strong></label>
         <input id="sound-volume" aria-label="音效音量" type="range" min="0" max="100" step="5" value={Math.round(preferences.volume * 100)}
           onChange={event => onChange({ ...preferences, volume: Number(event.target.value) / 100 })} />
-        <button className="button small" onClick={onPreview} disabled={quiet}><Icon name="play" size={18} />试听音效</button>
+        <button className="button small extend-button" onClick={onPreview} disabled={quiet}><Icon name="play" size={18} />试听音效</button>
         <small>温和短音，不播放背景音乐</small>
       </div>
     </details>
