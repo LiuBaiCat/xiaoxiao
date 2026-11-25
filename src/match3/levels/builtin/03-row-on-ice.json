@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "row-on-ice",
+  "order": 3,
+  "revision": 1,
+  "title": "横向扫开薄冰",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8
+  ],
+  "seed": 1103,
+  "initialPieces": [
+    {
+      "row": 4,
+      "col": 3,
+      "kind": 0,
+      "special": "row"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "kind": 2,
+      "special": "row"
+    }
+  ],
+  "ice": [
+    {
+      "row": 4,
+      "col": 1,
+      "layers": 1
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "layers": 1
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "layers": 1
+    }
+  ],
+  "blockers": [],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 32,
+  "starThresholds": [500, 750, 1000],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "row",
+      "type": "special",
+      "special": "row",
+      "count": 1
+    },
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "layers",
+      "count": 3
+    }
+  ]
+}

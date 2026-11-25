@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "color-gifts",
+  "order": 11,
+  "revision": 1,
+  "title": "同色朋友拆礼盒",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1111,
+  "initialPieces": [],
+  "ice": [],
+  "blockers": [
+    {
+      "row": 3,
+      "col": 3,
+      "blocker": {
+        "type": "gift",
+        "color": 0,
+        "reward": {
+          "tool": "hammer",
+          "count": 1
+        }
+      }
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "blocker": {
+        "type": "gift",
+        "color": 2,
+        "reward": {
+          "tool": "swap",
+          "count": 1
+        }
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 42,
+  "starThresholds": [900, 1600, 2300],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "gifts",
+      "type": "clear",
+      "obstacle": "gift",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "rabbits",
+      "type": "collect",
+      "kind": 2,
+      "count": 25
+    }
+  ]
+}

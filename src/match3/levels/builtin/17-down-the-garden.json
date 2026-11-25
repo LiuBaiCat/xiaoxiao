@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "down-the-garden",
+  "order": 17,
+  "revision": 1,
+  "title": "沿着花园向下走",
+  "width": 9,
+  "height": 18,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1117,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 3,
+      "col": 3,
+      "layers": 1
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "layers": 1
+    }
+  ],
+  "blockers": [
+    {
+      "row": 12,
+      "col": 3,
+      "blocker": {
+        "type": "snow",
+        "layers": 2
+      }
+    },
+    {
+      "row": 14,
+      "col": 5,
+      "blocker": {
+        "type": "snow",
+        "layers": 2
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 64,
+  "starThresholds": [1500, 2400, 3100],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": true,
+  "stages": [
+    {
+      "id": "ice-garden",
+      "startRow": 0,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "first-ice",
+          "type": "clear",
+          "obstacle": "ice",
+          "unit": "objects",
+          "count": 2
+        },
+        {
+          "id": "first-cats",
+          "type": "collect",
+          "kind": 0,
+          "count": 18
+        }
+      ]
+    },
+    {
+      "id": "snow-garden",
+      "startRow": 9,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "last-snow",
+          "type": "clear",
+          "obstacle": "snow",
+          "unit": "layers",
+          "count": 4
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "journey-rabbits",
+      "type": "collect",
+      "kind": 2,
+      "count": 42
+    }
+  ]
+}

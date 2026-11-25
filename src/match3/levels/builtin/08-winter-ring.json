@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "winter-ring",
+  "order": 8,
+  "revision": 1,
+  "title": "冰雪围着小池塘",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    "....#....",
+    "...###...",
+    "....#....",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1108,
+  "initialPieces": [
+    {
+      "row": 2,
+      "col": 3,
+      "kind": 0,
+      "special": "bird"
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "kind": 2,
+      "special": "row"
+    }
+  ],
+  "ice": [
+    {
+      "row": 2,
+      "col": 2,
+      "layers": 3
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "layers": 3
+    }
+  ],
+  "blockers": [
+    {
+      "row": 3,
+      "col": 2,
+      "blocker": {
+        "type": "snow",
+        "layers": 3
+      }
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "blocker": {
+        "type": "snow",
+        "layers": 3
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 48,
+  "starThresholds": [700, 1200, 1700],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "snow",
+      "type": "clear",
+      "obstacle": "snow",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "layers",
+      "count": 6
+    }
+  ]
+}

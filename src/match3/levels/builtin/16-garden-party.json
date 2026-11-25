@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "garden-party",
+  "order": 16,
+  "revision": 1,
+  "title": "花园伙伴大聚会",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1116,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 2,
+      "col": 2,
+      "layers": 2
+    }
+  ],
+  "blockers": [
+    {
+      "row": 3,
+      "col": 3,
+      "blocker": {
+        "type": "snow",
+        "layers": 2
+      }
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "blocker": {
+        "type": "gift",
+        "color": 0,
+        "reward": {
+          "tool": "hammer",
+          "count": 2
+        }
+      }
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "blocker": {
+        "type": "poison"
+      }
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          0,
+          2,
+          4
+        ],
+        "index": 0
+      }
+    }
+  ],
+  "locks": [
+    {
+      "row": 2,
+      "col": 6,
+      "type": "vine"
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "type": "fur"
+    }
+  ],
+  "ropes": [
+    {
+      "from": {
+        "row": 4,
+        "col": 4
+      },
+      "to": {
+        "row": 4,
+        "col": 5
+      }
+    }
+  ],
+  "portals": [
+    {
+      "id": "party-gate",
+      "from": {
+        "row": 8,
+        "col": 0
+      },
+      "to": {
+        "row": 0,
+        "col": 8
+      }
+    }
+  ],
+  "spawnPoints": [],
+  "moves": 60,
+  "starThresholds": [250, 500, 750],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "snow",
+      "type": "clear",
+      "obstacle": "snow",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "gift",
+      "type": "clear",
+      "obstacle": "gift",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "poison",
+      "type": "clear",
+      "obstacle": "poison",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "crystal",
+      "type": "clear",
+      "obstacle": "crystal",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "vine",
+      "type": "clear",
+      "obstacle": "vine",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "fur",
+      "type": "clear",
+      "obstacle": "fur",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "layers",
+      "count": 2
+    }
+  ]
+}

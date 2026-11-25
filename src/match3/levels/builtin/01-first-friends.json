@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1, "rulesVersion": 1,
+  "packId": "builtin", "id": "first-friends", "order": 1, "revision": 1, "title": "初见小伙伴",
+  "width": 6, "height": 6,
+  "mask": ["......", "......", "......", "......", "......", "......"],
+  "palette": [0, 2, 4, 7], "seed": 1101,
+  "initialPieces": [], "ice": [], "blockers": [], "locks": [], "ropes": [], "portals": [], "spawnPoints": [],
+  "moves": 32, "starThresholds": [500, 900, 1300], "tools": {"hammer": 2, "swap": 2, "shuffle": 2}, "scroll": false,
+  "stages": [{"id": "stage1", "startRow": 0, "rows": 6, "goals": []}],
+  "goals": [{"id": "cats", "type": "collect", "kind": 0, "count": 12}]
+}

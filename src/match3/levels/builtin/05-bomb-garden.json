@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "bomb-garden",
+  "order": 5,
+  "revision": 1,
+  "title": "炸弹的小惊喜",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1105,
+  "initialPieces": [
+    {
+      "row": 4,
+      "col": 3,
+      "kind": 0,
+      "special": "bomb"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "kind": 2,
+      "special": "bomb"
+    }
+  ],
+  "ice": [
+    {
+      "row": 3,
+      "col": 3,
+      "layers": 1
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "layers": 1
+    }
+  ],
+  "blockers": [],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 34,
+  "starThresholds": [900, 1400, 1900],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "bomb",
+      "type": "special",
+      "special": "bomb",
+      "count": 1
+    },
+    {
+      "id": "cats",
+      "type": "collect",
+      "kind": 0,
+      "count": 24
+    }
+  ]
+}

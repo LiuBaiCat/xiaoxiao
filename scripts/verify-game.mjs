@@ -38,7 +38,12 @@ const page = await context.newPage();
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-const click = name => page.getByRole('button', { name, exact: true }).click();
+const click = async (name, target = page) => {
+  const linkCard = target.locator('[data-game-card="link"]');
+  const homeEntry = ['开始游戏', '继续游戏', '选择关卡'].includes(name) && await linkCard.isVisible();
+  await (homeEntry ? linkCard : target).getByRole('button', { name, exact: true }).click();
+  if (name === '测试／破解模式') await target.getByRole('button', { name: '测试连连看', exact: true }).click();
+};
 const timerSeconds = async () => {
   return Number.parseInt(await page.getByTestId('timer').innerText(), 10);
 };
@@ -520,7 +525,7 @@ try {
       const fitPage = await fitContext.newPage();
       fitPage.on('pageerror', error => errors.push(error.message));
       await fitPage.goto(pathToFileURL(path.resolve('dist/index.html')).href);
-      await fitPage.getByRole('button', { name: '开始游戏', exact: true }).click();
+      await fitPage.locator('[data-game-card="link"]').getByRole('button', { name: '开始游戏', exact: true }).click();
       await fitPage.getByRole('button', { name: '开始这一关', exact: true }).click();
       await expect(fitPage.locator('.tile')).toHaveCount(140);
       const tilePixels = await expectBoardFits(fitPage) * zoom;
@@ -549,7 +554,7 @@ try {
   offline.on('request', request => { if (/^https?:/.test(request.url())) networkRequests.push(request.url()); });
   await offline.goto(pathToFileURL(path.resolve('dist/index.html')).href);
   await expect(offline.getByRole('heading', { name: '开心连连看' })).toBeVisible();
-  await offline.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await offline.locator('[data-game-card="link"]').getByRole('button', { name: '开始游戏', exact: true }).click();
   await offline.getByRole('button', { name: '开始这一关', exact: true }).click();
   await expect(offline.locator('.tile')).toHaveCount(140);
   await offline.getByRole('button', { name: /提示一下/ }).click();
@@ -661,7 +666,7 @@ try {
   await closing.clock.pauseAt(new Date('2026-11-22T00:00:01Z'));
   await closing.goto(pathToFileURL(path.resolve('dist/index.html')).href);
   await expect.poll(() => closing.evaluate(() => window.__fullscreenRequests)).toBe(1);
-  await closing.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await closing.locator('[data-game-card="link"]').getByRole('button', { name: '开始游戏', exact: true }).click();
   await expect.poll(() => closing.evaluate(() => !!document.fullscreenElement)).toBe(true);
   await closing.getByRole('button', { name: '开始这一关', exact: true }).click();
   await expect(closing.getByTestId('timer')).toHaveText('360秒');
@@ -702,7 +707,7 @@ try {
   await expect(closing.getByTestId('timer')).toHaveText(exitTime);
   await closing.getByRole('button', { name: '先回首页', exact: true }).click();
   const isolatedSave = await closing.evaluate(() => localStorage.getItem('slow-paws-link:save:v1'));
-  await closing.getByRole('button', { name: '测试／破解模式', exact: true }).click();
+  await click('测试／破解模式', closing);
   await closing.getByRole('dialog').getByRole('button', { name: '退出游戏', exact: true }).click();
   await expect(closing.getByRole('dialog')).toContainText('测试模式的进度不会保存');
   expect(await closing.evaluate(() => localStorage.getItem('slow-paws-link:save:v1'))).toBe(isolatedSave);
@@ -736,7 +741,7 @@ try {
   const denied = await deniedContext.newPage();
   await denied.goto('http://127.0.0.1:5173/');
   await expect(denied.getByRole('status')).toContainText('不支持保存');
-  await denied.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await denied.locator('[data-game-card="link"]').getByRole('button', { name: '开始游戏', exact: true }).click();
   await denied.getByRole('button', { name: '开始这一关', exact: true }).click();
   await expect(denied.locator('.tile')).toHaveCount(140);
   expect(await denied.evaluate(() => !!document.fullscreenElement)).toBe(false);

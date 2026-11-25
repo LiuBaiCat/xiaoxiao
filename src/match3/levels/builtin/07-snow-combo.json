@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "snow-combo",
+  "order": 7,
+  "revision": 1,
+  "title": "直线和炸弹合作",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1107,
+  "initialPieces": [
+    {
+      "row": 4,
+      "col": 3,
+      "kind": 0,
+      "special": "row"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "kind": 2,
+      "special": "bomb"
+    }
+  ],
+  "ice": [
+    {
+      "row": 4,
+      "col": 1,
+      "layers": 2
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "layers": 2
+    }
+  ],
+  "blockers": [
+    {
+      "row": 3,
+      "col": 6,
+      "blocker": {
+        "type": "snow",
+        "layers": 2
+      }
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "blocker": {
+        "type": "snow",
+        "layers": 2
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 42,
+  "starThresholds": [700, 1200, 1700],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "snow",
+      "type": "clear",
+      "obstacle": "snow",
+      "unit": "layers",
+      "count": 4
+    },
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "layers",
+      "count": 4
+    }
+  ]
+}

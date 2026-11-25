@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "fur-playground",
+  "order": 14,
+  "revision": 1,
+  "title": "追逐灰毛球",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    "#.......#",
+    ".........",
+    ".........",
+    ".........",
+    "....#....",
+    ".........",
+    ".........",
+    ".........",
+    "#.......#"
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1114,
+  "initialPieces": [],
+  "ice": [],
+  "blockers": [],
+  "locks": [
+    {
+      "row": 3,
+      "col": 3,
+      "type": "fur"
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "type": "fur"
+    }
+  ],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 46,
+  "starThresholds": [1100, 2000, 2800],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "fur",
+      "type": "clear",
+      "obstacle": "fur",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "turtles",
+      "type": "collect",
+      "kind": 4,
+      "count": 32
+    }
+  ]
+}

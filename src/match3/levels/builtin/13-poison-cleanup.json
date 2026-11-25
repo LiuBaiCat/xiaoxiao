@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "poison-cleanup",
+  "order": 13,
+  "revision": 1,
+  "title": "及时清理小毒液",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1113,
+  "initialPieces": [],
+  "ice": [],
+  "blockers": [
+    {
+      "row": 4,
+      "col": 4,
+      "blocker": {
+        "type": "poison"
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 44,
+  "starThresholds": [1000, 1800, 2500],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "poison",
+      "type": "clear",
+      "obstacle": "poison",
+      "unit": "objects",
+      "count": 1
+    },
+    {
+      "id": "cats",
+      "type": "collect",
+      "kind": 0,
+      "count": 32
+    }
+  ]
+}

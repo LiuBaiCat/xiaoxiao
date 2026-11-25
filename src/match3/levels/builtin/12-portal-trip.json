@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "portal-trip",
+  "order": 12,
+  "revision": 1,
+  "title": "穿过传送门旅行",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1112,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 3,
+      "col": 6,
+      "layers": 1
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "layers": 1
+    }
+  ],
+  "blockers": [],
+  "locks": [],
+  "ropes": [],
+  "portals": [
+    {
+      "id": "garden-gate",
+      "from": {
+        "row": 8,
+        "col": 2
+      },
+      "to": {
+        "row": 0,
+        "col": 6
+      }
+    }
+  ],
+  "spawnPoints": [],
+  "moves": 44,
+  "starThresholds": [700, 1200, 1650],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "butterflies",
+      "type": "collect",
+      "kind": 8,
+      "count": 32
+    }
+  ]
+}

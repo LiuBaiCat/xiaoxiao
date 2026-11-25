@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "crystal-colors",
+  "order": 15,
+  "revision": 1,
+  "title": "变色的水晶球",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1115,
+  "initialPieces": [],
+  "ice": [],
+  "blockers": [
+    {
+      "row": 3,
+      "col": 3,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          0,
+          2,
+          4
+        ],
+        "index": 0
+      }
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          7,
+          8,
+          6
+        ],
+        "index": 1
+      }
+    }
+  ],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 50,
+  "starThresholds": [800, 1400, 1900],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "crystals",
+      "type": "clear",
+      "obstacle": "crystal",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "elephants",
+      "type": "collect",
+      "kind": 6,
+      "count": 28
+    }
+  ]
+}

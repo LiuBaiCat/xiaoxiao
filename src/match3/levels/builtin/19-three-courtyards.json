@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "three-courtyards",
+  "order": 19,
+  "revision": 1,
+  "title": "三个庭院的约定",
+  "width": 9,
+  "height": 27,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "#.......#",
+    ".........",
+    ".........",
+    ".........",
+    "....#....",
+    ".........",
+    ".........",
+    ".........",
+    "#.......#",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1119,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 3,
+      "col": 3,
+      "layers": 2
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "layers": 2
+    }
+  ],
+  "blockers": [
+    {
+      "row": 12,
+      "col": 3,
+      "blocker": {
+        "type": "gift",
+        "color": 0,
+        "reward": {
+          "tool": "hammer",
+          "count": 2
+        }
+      }
+    },
+    {
+      "row": 14,
+      "col": 5,
+      "blocker": {
+        "type": "snow",
+        "layers": 3
+      }
+    },
+    {
+      "row": 22,
+      "col": 4,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          0,
+          2,
+          4,
+          7
+        ],
+        "index": 2
+      }
+    }
+  ],
+  "locks": [
+    {
+      "row": 21,
+      "col": 3,
+      "type": "vine"
+    },
+    {
+      "row": 23,
+      "col": 5,
+      "type": "fur"
+    }
+  ],
+  "ropes": [
+    {
+      "from": {
+        "row": 4,
+        "col": 4
+      },
+      "to": {
+        "row": 4,
+        "col": 5
+      }
+    }
+  ],
+  "portals": [
+    {
+      "id": "third-gate",
+      "from": {
+        "row": 26,
+        "col": 1
+      },
+      "to": {
+        "row": 18,
+        "col": 7
+      }
+    }
+  ],
+  "spawnPoints": [],
+  "moves": 90,
+  "starThresholds": [1600, 2600, 3200],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": true,
+  "stages": [
+    {
+      "id": "ice-court",
+      "startRow": 0,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "first-ice",
+          "type": "clear",
+          "obstacle": "ice",
+          "unit": "layers",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "gift-court",
+      "startRow": 9,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "second-gift",
+          "type": "clear",
+          "obstacle": "gift",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "second-snow",
+          "type": "clear",
+          "obstacle": "snow",
+          "unit": "layers",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "crystal-court",
+      "startRow": 18,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "last-crystal",
+          "type": "clear",
+          "obstacle": "crystal",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "last-vine",
+          "type": "clear",
+          "obstacle": "vine",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "last-fur",
+          "type": "clear",
+          "obstacle": "fur",
+          "unit": "objects",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "journey-pandas",
+      "type": "collect",
+      "kind": 7,
+      "count": 50
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1, "rulesVersion": 1,
+  "packId": "builtin", "id": "little-corner", "order": 2, "revision": 1, "title": "拐角的小花园",
+  "width": 6, "height": 6,
+  "mask": ["#....#", "......", "......", "......", "......", "#....#"],
+  "palette": [0, 2, 4, 7], "seed": 1102,
+  "initialPieces": [], "ice": [], "blockers": [], "locks": [], "ropes": [], "portals": [], "spawnPoints": [],
+  "moves": 38, "starThresholds": [600, 1000, 1400], "tools": {"hammer": 2, "swap": 2, "shuffle": 2}, "scroll": false,
+  "stages": [{"id": "stage1", "startRow": 0, "rows": 6, "goals": []}],
+  "goals": [{"id": "rabbits", "type": "collect", "kind": 2, "count": 15}, {"id": "turtles", "type": "collect", "kind": 4, "count": 12}]
+}

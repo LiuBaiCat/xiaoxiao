@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "friends-festival",
+  "order": 20,
+  "revision": 1,
+  "title": "动物乐园庆典",
+  "width": 9,
+  "height": 27,
+  "mask": [
+    "#.......#",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "#.......#",
+    "##.......",
+    "##.......",
+    "#........",
+    "#........",
+    ".........",
+    "........#",
+    "........#",
+    ".......##",
+    ".......##",
+    ".........",
+    ".........",
+    ".........",
+    "....#....",
+    "...###...",
+    "....#....",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1120,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 3,
+      "col": 3,
+      "layers": 3
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "layers": 2
+    }
+  ],
+  "blockers": [
+    {
+      "row": 4,
+      "col": 4,
+      "blocker": {
+        "type": "snow",
+        "layers": 3
+      }
+    },
+    {
+      "row": 12,
+      "col": 3,
+      "blocker": {
+        "type": "gift",
+        "color": 4,
+        "reward": {
+          "tool": "hammer",
+          "count": 2
+        }
+      }
+    },
+    {
+      "row": 14,
+      "col": 5,
+      "blocker": {
+        "type": "poison"
+      }
+    },
+    {
+      "row": 24,
+      "col": 5,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          0,
+          2,
+          4,
+          7,
+          8,
+          6
+        ],
+        "index": 3
+      }
+    }
+  ],
+  "locks": [
+    {
+      "row": 21,
+      "col": 2,
+      "type": "vine"
+    },
+    {
+      "row": 23,
+      "col": 6,
+      "type": "fur"
+    }
+  ],
+  "ropes": [
+    {
+      "from": {
+        "row": 13,
+        "col": 3
+      },
+      "to": {
+        "row": 13,
+        "col": 4
+      }
+    },
+    {
+      "from": {
+        "row": 13,
+        "col": 4
+      },
+      "to": {
+        "row": 14,
+        "col": 4
+      }
+    }
+  ],
+  "portals": [
+    {
+      "id": "festival-gate",
+      "from": {
+        "row": 26,
+        "col": 1
+      },
+      "to": {
+        "row": 18,
+        "col": 7
+      }
+    }
+  ],
+  "spawnPoints": [],
+  "moves": 108,
+  "starThresholds": [2400, 3600, 4500],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": true,
+  "stages": [
+    {
+      "id": "winter",
+      "startRow": 0,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "first-ice",
+          "type": "clear",
+          "obstacle": "ice",
+          "unit": "layers",
+          "count": 5
+        },
+        {
+          "id": "first-snow",
+          "type": "clear",
+          "obstacle": "snow",
+          "unit": "objects",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "spring",
+      "startRow": 9,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "second-gift",
+          "type": "clear",
+          "obstacle": "gift",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "second-poison",
+          "type": "clear",
+          "obstacle": "poison",
+          "unit": "objects",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "festival",
+      "startRow": 18,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "last-crystal",
+          "type": "clear",
+          "obstacle": "crystal",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "last-vine",
+          "type": "clear",
+          "obstacle": "vine",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "last-fur",
+          "type": "clear",
+          "obstacle": "fur",
+          "unit": "objects",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "journey-butterflies",
+      "type": "collect",
+      "kind": 8,
+      "count": 60
+    },
+    {
+      "id": "celebration-score",
+      "type": "score",
+      "count": 4500
+    }
+  ]
+}

@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run --maxWorkers=2",
     "test:browser": "node scripts/verify-game.mjs",
+    "test:match3": "node scripts/verify-match3.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

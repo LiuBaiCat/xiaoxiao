@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "rope-bridge",
+  "order": 9,
+  "revision": 1,
+  "title": "绕过绳子小桥",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    "##.......",
+    "##.......",
+    "#........",
+    "#........",
+    ".........",
+    "........#",
+    "........#",
+    ".......##",
+    ".......##"
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1109,
+  "initialPieces": [],
+  "ice": [],
+  "blockers": [],
+  "locks": [],
+  "ropes": [
+    {
+      "from": {
+        "row": 3,
+        "col": 3
+      },
+      "to": {
+        "row": 3,
+        "col": 4
+      }
+    },
+    {
+      "from": {
+        "row": 4,
+        "col": 3
+      },
+      "to": {
+        "row": 4,
+        "col": 4
+      }
+    },
+    {
+      "from": {
+        "row": 5,
+        "col": 3
+      },
+      "to": {
+        "row": 5,
+        "col": 4
+      }
+    }
+  ],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 40,
+  "starThresholds": [1000, 1800, 2600],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "turtles",
+      "type": "collect",
+      "kind": 4,
+      "count": 32
+    },
+    {
+      "id": "pandas",
+      "type": "collect",
+      "kind": 7,
+      "count": 24
+    }
+  ]
+}

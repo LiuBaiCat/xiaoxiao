@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "column-on-ice",
+  "order": 4,
+  "revision": 1,
+  "title": "竖向穿过冰晶",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    "#.......#",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "#.......#"
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8
+  ],
+  "seed": 1104,
+  "initialPieces": [
+    {
+      "row": 3,
+      "col": 4,
+      "kind": 0,
+      "special": "column"
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "kind": 2,
+      "special": "column"
+    }
+  ],
+  "ice": [
+    {
+      "row": 1,
+      "col": 4,
+      "layers": 1
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "layers": 1
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "layers": 1
+    }
+  ],
+  "blockers": [],
+  "locks": [],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 32,
+  "starThresholds": [800, 1300, 1800],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "column",
+      "type": "special",
+      "special": "column",
+      "count": 1
+    },
+    {
+      "id": "ice",
+      "type": "clear",
+      "obstacle": "ice",
+      "unit": "objects",
+      "count": 3
+    }
+  ]
+}

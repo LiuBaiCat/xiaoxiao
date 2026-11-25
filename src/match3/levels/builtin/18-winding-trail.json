@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "winding-trail",
+  "order": 18,
+  "revision": 1,
+  "title": "曲折小路的礼物",
+  "width": 9,
+  "height": 18,
+  "mask": [
+    "##.......",
+    "##.......",
+    "#........",
+    "#........",
+    ".........",
+    "........#",
+    "........#",
+    ".......##",
+    ".......##",
+    "#.......#",
+    ".........",
+    ".........",
+    "....#....",
+    "...###...",
+    "....#....",
+    ".........",
+    ".........",
+    "#.......#"
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1118,
+  "initialPieces": [],
+  "ice": [
+    {
+      "row": 3,
+      "col": 5,
+      "layers": 2
+    }
+  ],
+  "blockers": [
+    {
+      "row": 12,
+      "col": 2,
+      "blocker": {
+        "type": "gift",
+        "color": 2,
+        "reward": {
+          "tool": "hammer",
+          "count": 2
+        }
+      }
+    },
+    {
+      "row": 15,
+      "col": 6,
+      "blocker": {
+        "type": "crystal",
+        "colors": [
+          0,
+          2,
+          7
+        ],
+        "index": 1
+      }
+    }
+  ],
+  "locks": [
+    {
+      "row": 5,
+      "col": 3,
+      "type": "vine"
+    }
+  ],
+  "ropes": [
+    {
+      "from": {
+        "row": 4,
+        "col": 3
+      },
+      "to": {
+        "row": 4,
+        "col": 4
+      }
+    }
+  ],
+  "portals": [
+    {
+      "id": "lower-gate",
+      "from": {
+        "row": 17,
+        "col": 2
+      },
+      "to": {
+        "row": 9,
+        "col": 6
+      }
+    }
+  ],
+  "spawnPoints": [],
+  "moves": 72,
+  "starThresholds": [1800, 2800, 3500],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": true,
+  "stages": [
+    {
+      "id": "steps",
+      "startRow": 0,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "first-vine",
+          "type": "clear",
+          "obstacle": "vine",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "first-ice",
+          "type": "clear",
+          "obstacle": "ice",
+          "unit": "layers",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "pond",
+      "startRow": 9,
+      "rows": 9,
+      "goals": [
+        {
+          "id": "last-gift",
+          "type": "clear",
+          "obstacle": "gift",
+          "unit": "objects",
+          "count": 1
+        },
+        {
+          "id": "last-crystal",
+          "type": "clear",
+          "obstacle": "crystal",
+          "unit": "objects",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "journey-turtles",
+      "type": "collect",
+      "kind": 4,
+      "count": 48
+    }
+  ]
+}

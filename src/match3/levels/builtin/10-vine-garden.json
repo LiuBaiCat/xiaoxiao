@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "rulesVersion": 1,
+  "packId": "builtin",
+  "id": "vine-garden",
+  "order": 10,
+  "revision": 1,
+  "title": "解开柔软的藤蔓",
+  "width": 9,
+  "height": 9,
+  "mask": [
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    ".........",
+    "........."
+  ],
+  "palette": [
+    0,
+    2,
+    4,
+    7,
+    8,
+    6
+  ],
+  "seed": 1110,
+  "initialPieces": [
+    {
+      "row": 3,
+      "col": 3,
+      "kind": 0
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "kind": 2
+    }
+  ],
+  "ice": [
+    {
+      "row": 3,
+      "col": 3,
+      "layers": 1
+    }
+  ],
+  "blockers": [],
+  "locks": [
+    {
+      "row": 3,
+      "col": 3,
+      "type": "vine"
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "type": "vine"
+    }
+  ],
+  "ropes": [],
+  "portals": [],
+  "spawnPoints": [],
+  "moves": 40,
+  "starThresholds": [700, 1200, 1650],
+  "tools": {
+    "hammer": 2,
+    "swap": 2,
+    "shuffle": 2
+  },
+  "scroll": false,
+  "stages": [
+    {
+      "id": "stage1",
+      "startRow": 0,
+      "rows": 9,
+      "goals": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "vine",
+      "type": "clear",
+      "obstacle": "vine",
+      "unit": "objects",
+      "count": 2
+    },
+    {
+      "id": "cats",
+      "type": "collect",
+      "kind": 0,
+      "count": 26
+    }
+  ]
+}
